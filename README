@@ -1,0 +1,68 @@
+DMQ - Durable Message Queue
+
+This is a C and Python module to implement a simple fast message queue.
+
+It uses 3 files per queue, two files used for a circular buffer and one file for control.
+
+The reader/consumer controls which file the writer/producer writes to.
+
+When reader hits EOF on a file being written to, or after a certain size,
+the writer is redirected to the other file.
+
+The C source can also be compiled to a standalone program (dmq) with the following options:
+
+-p print contents of map file
+-r run a reader
+-w run a writer
+
+
+C Interface:
+
+int dmq_init(char *basepath, int mode)
+- Returns a message queue descriptor that must be used when calling the other functions.
+- On error returns -1.
+- Parameters:
+    basepath            base path of the 3 files required, the files will be basepath + "0", + "1", and + "qmap"
+    mode                one of the framing modes supported, MODE_NEWLINE is default
+
+void dmq_free(int sdesc)
+- Frees the descriptor.
+- Parameters:
+    sdesc               descriptor returned by dmq_init()
+
+int dmq_send(int sdesc, char *msg, int msglen)
+- Sends a message on the descriptor's queue.
+- Returns the number of bytes written to the queue, or -1 on error.
+- Parameters:
+    sdesc               descriptor returned by dmq_init()
+    msg                 pointer to a buffer with the message to send
+    msglen              length of message to send
+
+struct dmq_record *dmq_receive(int sdesc, int nowait, int *errorp)
+- Receives a message from the descriptor's queue.
+- Returns a structure with pointers to the beginning and end of the message, or NULL on error.
+- Parameters:
+    sdesc               descriptor returned by dmq_init()
+    nowait              0 if the receive should block, 1 if it should not block if there is no pending message
+    errorp              pointer to error value set to 1 if the return value is NULL and an error occurred
+
+void dmq_info(int sdesc)
+- Prints internal control information
+- Parameters:
+    sdesc               descriptor returned by dmq_init()
+
+char *dmq_errmsg;
+- Contains a text message describing any error that occurred
+
+Python "dmq" module Interface:
+
+import dmq
+
+q1 = dmq.DMQ("q", dmq.MODE_NEWLINES)
+q1.send("foo")
+
+q2 = dmq.DMQ("q")   # It uses whatever framing was specified initially
+message = q2.receive(nowait=True)   # nowait is False by default
+for message in q2.receive_iter():
+    print(message)
+

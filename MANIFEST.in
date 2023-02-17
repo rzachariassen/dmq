@@ -1,0 +1,9 @@
+include build.sh
+include cdmq.pxd
+include dmq.c
+include dmq.h
+include Makefile
+include pydmq.pyx
+include setup.py
+include test.py
+include buffer.py
